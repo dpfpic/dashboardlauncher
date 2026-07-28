@@ -1,0 +1,10 @@
+{
+  "name": "dashboardlauncher/dashboardlauncher",
+  "description": "Dashboard Launcher App for Nextcloud",
+  "license": "AGPL-3.0-or-later",
+  "autoload": {
+    "psr-4": {
+      "OCA\\DashboardLauncher\\": "lib/"
+    }
+  }
+}

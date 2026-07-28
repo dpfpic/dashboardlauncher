@@ -1,0 +1,269 @@
+/* ===================================================
+   FORCE ABSOLUE DE LA PLEINE LARGEUR (FULL WIDTH)
+   =================================================== */
+
+/* Conteneurs principaux Nextcloud */
+#app-content {
+    max-height: 100vh;
+    box-sizing: border-box;
+    overflow-y: auto;
+    overflow-x: hidden;
+}
+
+#content,
+#app,
+#app-content,
+#app-content-wrapper {
+    width: 100% !important;
+    min-width: 100% !important;
+    max-width: 100% !important;
+    margin-left: 0 !important;
+    margin-right: 0 !important;
+    padding-left: 0 !important;
+    padding-right: 0 !important;
+    box-sizing: border-box !important;
+}
+
+/* Conteneur principal de l'application */
+.dashboard-launcher-container {
+    width: 100% !important;
+    box-sizing: border-box !important;
+    padding: 20px !important;
+    display: flex;
+    justify-content: center;
+    align-items: stretch;
+    min-height: calc(100vh - 100px); /* Ajusté pour éviter le débordement vertical */
+}
+
+/* Carte centrale */
+.dashboard-card {
+    background-color: var(--color-main-background);
+    border: 1px solid var(--color-border);
+    border-radius: 12px;
+    padding: 30px;
+    width: 100% !important;
+    box-sizing: border-box;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+    text-align: center;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+}
+
+/* ===================================================
+   EN-TÊTE DU PORTAIL
+   =================================================== */
+
+.portal-header {
+    margin-bottom: 30px;
+}
+
+.portal-header h1 {
+    font-size: 2.8rem;
+    font-weight: 800;
+    letter-spacing: -1px;
+    margin: 0 0 10px 0;
+    line-height: 1.2;
+    background: linear-gradient(135deg, var(--color-primary-element) 0%, #3498db 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    filter: drop-shadow(0px 2px 4px rgba(0, 0, 0, 0.08));
+}
+
+.portal-header p {
+    color: var(--color-text-maxcontrast);
+    font-size: 1.1rem;
+    font-weight: 500;
+    max-width: 600px;
+    margin: 0 auto;
+}
+
+/* ===================================================
+   GRILLE ET BOUTONS DE NAVIGATION
+   =================================================== */
+
+.button-grid {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 20px;
+    margin: 20px auto;
+    width: 100%;
+    justify-content: center; 
+    align-content: center;
+}
+
+.nav-button {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 25px 15px;
+    background-color: var(--color-background-hover);
+    border: 1px solid var(--color-border);
+    border-radius: 12px;
+    text-decoration: none !important;
+    transition: transform 0.2s ease, border-color 0.2s ease, background-color 0.2s ease;
+    flex: 1 1 220px; 
+    max-width: 280px;
+    box-sizing: border-box;
+    position: relative;
+}
+
+.nav-button:hover, 
+.nav-button:focus {
+    background-color: var(--color-background-dark);
+    border-color: var(--color-primary-element);
+    transform: translateY(-3px);
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.05);
+}
+
+.nav-button .label {
+    font-size: 1.1rem;
+    font-weight: 600;
+    color: var(--color-main-text);
+    text-align: center;
+}
+
+.nav-button .icon {
+    display: inline-block;
+    width: 48px;
+    height: 48px;
+    background-size: contain;
+    margin-bottom: 15px;
+    opacity: 0.8;
+}
+
+.nav-button:hover .icon {
+    opacity: 1;
+}
+
+/* Emojis */
+.portal-emoji {
+    font-size: 2.5rem !important;
+    display: inline-block;
+    transition: transform 0.2s ease;
+    user-select: none;
+    margin-bottom: 12px;
+    font-family: "Apple Color Emoji", "Segoe UI Emoji", "Noto Color Emoji", sans-serif !important;    color: initial !important;
+    opacity: 1 !important;
+}
+
+.nav-button:hover .portal-emoji {
+    transform: scale(1.15);
+}
+
+.icon-thumd {
+   min-width: 32px;
+   min-width: 32px;
+}
+
+.portal-emoji {
+    --icon-size: 48px;
+}
+
+.button-icon {
+    width: var(--icon-size);
+    height: var(--icon-size);
+    object-fit: contain;
+}
+
+/* ===================================================
+   SPINNER (NOIR & AGRANDI)
+   =================================================== */
+
+/* Spinner sur le bouton cliqué */
+.button-spinner {
+    display: none;
+    width: 18px;
+    height: 18px;
+    border: 2px solid rgba(0,0,0,0.15);
+    border-top-color: #333;
+    border-radius: 50%;
+    margin-left: 8px;
+    animation: portal-spin 0.7s linear infinite;
+    vertical-align: middle;
+}
+
+@keyframes portal-spin {
+    to { transform: rotate(360deg); }
+}
+
+.nav-button.is-loading .button-spinner {
+    display: inline-block;
+}
+
+.nav-button.is-loading .label,
+.nav-button.is-loading .portal-emoji {
+    opacity: 0.5;
+}
+
+/* Gel de la page : empêche de cliquer sur les autres boutons */
+.button-grid.is-frozen .nav-button {
+    pointer-events: none;
+}
+
+.button-grid.is-frozen .nav-button:not(.is-loading) {
+    opacity: 0.4;
+}
+
+/* Curseur d'attente sur toute la page */
+body.portal-waiting {
+    cursor: wait;
+}
+/* ===================================================
+   PIED DE PAGE
+   =================================================== */
+
+.portal-footer {
+    width: 100%;
+    text-align: center;
+    padding: 15px 0 0 0;
+    margin-top: 20px;
+    font-size: 0.9em;
+    color: #555;
+    border-top: 1px solid var(--color-border);
+}
+
+.portal-footer .footer-logo {
+    height: 18px;
+    width: auto;
+    vertical-align: middle;
+    margin: 0 5px;
+    display: inline-block;
+}
+
+/* ===================================================
+   STMARPHONE
+   =================================================== */
+
+@media (max-width: 600px) {
+    .button-grid {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 12px;
+        margin: 15px auto;
+    }
+
+    .nav-button {
+        flex: none;
+        max-width: none;
+        padding: 12px 6px;
+    }
+
+    .portal-emoji {
+        --icon-size: 32px;
+        font-size: 1.6rem !important;
+        margin-bottom: 6px;
+    }
+
+    .nav-button .label {
+        font-size: 0.75rem;
+        line-height: 1.2;
+    }
+}
+
+@media (max-width: 380px) {
+    .button-grid {
+        grid-template-columns: repeat(2, 1fr);
+    }
+}
