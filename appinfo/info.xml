@@ -53,7 +53,7 @@ Cette application s'adapte à quasiment tous les contextes où vous souhaitez si
     <author>DPFPIC</author>
     <namespace>DashboardLauncher</namespace>
     <category>tools</category>
-    <bugs>https://github.com/.../issues</bugs>
+    <bugs>https://github.com/dashboardlauncher/issues</bugs>
 
     <dependencies>
         <nextcloud min-version="25" max-version="34"/>
