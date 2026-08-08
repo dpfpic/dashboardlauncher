@@ -54,7 +54,7 @@ Cette application s'adapte à quasiment tous les contextes où vous souhaitez si
     <namespace>DashboardLauncher</namespace>
     <category>dashboard</category>
     <bugs>https://github.com/dashboardlauncher/issues</bugs>
-
+    <screenshot small-thumbnail="https://raw.githubusercontent.com/dpfpic/dashboardlauncher/main/screenshots/dashboard.png">https://raw.githubusercontent.com/dpfpic/dashboardlauncher/main/screenshots/dashboard.png</screenshot>
     <dependencies>
         <nextcloud min-version="30" max-version="34"/>
     </dependencies>
