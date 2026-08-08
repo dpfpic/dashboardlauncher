@@ -69,7 +69,14 @@
         "Error loading settings": "Erreur chargement des réglages",
         "Settings saved": "Réglages enregistrés",
         "Error: {error}": "Erreur : {error}",
-        "Error while saving": "Erreur lors de l'enregistrement"
+        "Error while saving": "Erreur lors de l'enregistrement",
+        "General information":	"Informations générales",
+		"Visibility & display":	"Visibilité et affichage",
+		"Upload": "Envoyer",
+		"No icon selected":	"Aucune icône sélectionnée",
+		"Selected icon filename": "Nom du fichier de l'icône sélectionnée",
+		"Position updated":"Position mis à jour",
+        "Error saving the new order": "Erreur lors de l'enregistrement de la position."
     },
     "pluralForm": "nplurals=2; plural=(n > 1);"
 }

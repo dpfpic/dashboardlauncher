@@ -1,4 +1,4 @@
-<?php
+﻿<?php
 /**
  * Nextcloud - dashboardlauncher
  *
@@ -46,6 +46,10 @@ $dashboardLauncherL10n = [
     'Settings saved' => $l->t('Settings saved'),
     'Error: {error}' => $l->t('Error: {error}'),
     'Error while saving' => $l->t('Error while saving'),
+    'Drag to reorder' => $l->t('Drag to reorder'),
+	'Order updated' => $l->t('Order updated'),
+	'Error saving the new order' => $l->t('Error saving the new order'),
+	'Drag rows to reorder' => $l->t('Drag rows to reorder'),
 ];
 ?>
 
@@ -83,6 +87,9 @@ $dashboardLauncherL10n = [
     <table class="grid" id="dashboardlauncher-buttons-table">
         <thead>
             <tr>
+                <th class="col-drag">
+    <span class="reorder-hint" title="<?php p($l->t('Drag rows to reorder')); ?>">↕</span>
+</th> 
                 <th><?php p($l->t('Order')); ?></th>
                 <th><?php p($l->t('Title')); ?></th>
                 <th><?php p($l->t('Icon')); ?></th>
@@ -115,16 +122,21 @@ $dashboardLauncherL10n = [
                     $decodedGroups = is_string($groupes) ? json_decode($groupes, true) : $groupes;
                     $displayGroups = (is_array($decodedGroups) && !empty($decodedGroups)) ? implode(', ', $decodedGroups) : $l->t('All Users');
                 ?>
-                <tr data-id="<?php p($id); ?>"
-                    data-title="<?php p($titre); ?>"
-                    data-icon="<?php p($icone); ?>"
-                    data-route="<?php p($route); ?>"
-                    data-groups="<?php p(is_array($decodedGroups) ? json_encode($decodedGroups) : '[]'); ?>"
-                    data-order="<?php p($ordre); ?>"
-                    data-active="<?php p($actif ? '1' : '0'); ?>"
-                    data-taille="<?php p($taille); ?>">
+<tr draggable="true"
+    data-id="<?php p($id); ?>"
+    data-title="<?php p($titre); ?>"
+    data-icon="<?php p($icone); ?>"
+    data-route="<?php p($route); ?>"
+    data-groups="<?php p(is_array($decodedGroups) ? json_encode($decodedGroups) : '[]'); ?>"
+    data-order="<?php p($ordre); ?>"
+    data-active="<?php p($actif ? '1' : '0'); ?>"
+    data-taille="<?php p($taille); ?>">
 
-                    <td class="col-order"><?php p($ordre); ?></td>
+    <td class="col-drag">
+        <span class="drag-handle" title="<?php p($l->t('Drag to reorder')); ?>">⠿</span>
+    </td>
+    <td class="col-order"><?php p($ordre); ?></td>
+ 
                     <td class="col-title"><strong><?php p($titre); ?></strong></td>
 <td class="col-icon">
     <?php if (strpos($icone, 'icon_') === 0): ?>
@@ -157,7 +169,7 @@ $dashboardLauncherL10n = [
                     </td>
                     <td class="col-actions">
                         <button class="button edit-button" title="<?php p($l->t('Edit')); ?>"><?php p($l->t('Edit')); ?></button>
-                        <button class="button button-danger delete-button" title="<?php p($l->t('Delete')); ?>"><?php p($l->t('Delete')); ?></button>
+                        <button class="butto button-danger delete-button" title="<?php p($l->t('Delete')); ?>"><?php p($l->t('Delete')); ?></button>
                     </td>
                 </tr>
             <?php endforeach; ?>
@@ -166,82 +178,114 @@ $dashboardLauncherL10n = [
 </div>
 
 <!-- Modal Form for Adding/Editing Buttons -->
-<div id="button-modal" class="modal-dialog hidden">
+<div id="button-modal" class="modal-dialog hidden" role="dialog" aria-modal="true" aria-labelledby="modal-title">
     <div class="modal-content">
         <div class="modal-header">
             <h3 id="modal-title"><?php p($l->t('Add a shortcut')); ?></h3>
             <button type="button" id="modal-close-x" class="modal-close-btn" aria-label="<?php p($l->t('Close')); ?>">&times;</button>
         </div>
-        <form id="button-form">
+        <form id="button-form" class="modal-scroll-area">
             <input type="hidden" id="button-id" name="id" value="" />
 
-            <p>
-                <label for="button-title"><?php p($l->t('Title')); ?></label>
-                <input type="text" id="button-title" name="titre" class="input-wide" required />
-            </p>
+            <div class="modal-body-grid">
 
-            <p>
-    <label for="button-icon"><?php p($l->t('Icon class / SVG name (or upload/select below)')); ?></label>
-    <input type="text" id="button-icon" name="icone" placeholder="e.g. app.svg or icon-folder" class="input-wide" required readonly />
-    <div style="display:flex; gap:8px; margin-top:8px; align-items:center;">
-        <input type="file" id="button-icon-file" accept="image/png,image/jpeg,image/svg+xml,image/webp" />
-        <button type="button" id="browse-icons-btn" class="button"><?php p($l->t('My icons')); ?></button>
-        <button type="button" id="browse-library-btn" class="button"><?php p($l->t('Library')); ?></button>
-    </div>
-    <img id="icon-preview" src="" alt="" style="display:none; max-height:40px; margin-top:8px; border-radius:4px;" />
-    <div id="icon-gallery" class="icon-gallery hidden"></div>
-    <div id="library-gallery" class="icon-gallery hidden"></div>
-</p>
+                <!-- Fields column: comes FIRST in the DOM so "Title" is the first
+                     field reached when tabbing through the form or reading it
+                     with a screen reader. Visually it's still shown on the right
+                     (see .modal-column-fields / .modal-column-icon "order" in CSS). -->
+                <div class="modal-column modal-column-fields">
 
-            <p>
-                <label for="button-taille"><?php p($l->t('Icon size')); ?></label>
-                <select id="button-taille" name="taille" class="input-wide">
-                    <option value="small"><?php p($l->t('Small (32px)')); ?></option>
-                    <option value="medium" selected><?php p($l->t('Medium (48px)')); ?></option>
-                    <option value="large"><?php p($l->t('Large (64px)')); ?></option>
-                    <option value="xlarge"><?php p($l->t('Extra large (96px)')); ?></option>
-                </select>
-            </p>
+                    <fieldset class="form-section">
+                        <legend><?php p($l->t('General information')); ?></legend>
+                        <p>
+                            <label for="button-title"><?php p($l->t('Title')); ?></label>
+                            <input type="text" id="button-title" name="titre" class="input-wide" required />
+                        </p>
+                        <p>
+                            <label for="button-route"><?php p($l->t('Route / App ID / URL')); ?></label>
+                            <input type="text" id="button-route" name="route" placeholder="e.g. files or dashboardlauncher.page.index" class="input-wide" required />
+                        </p>
+                    </fieldset>
 
-            <p>
-                <label for="button-route"><?php p($l->t('Route / App ID / URL')); ?></label>
-                <input type="text" id="button-route" name="route" placeholder="e.g. files or dashboardlauncher.page.index" class="input-wide" required />
-            </p>
+                    <fieldset class="form-section">
+                        <legend><?php p($l->t('Visibility & display')); ?></legend>
 
-            <p>
-                <label><?php p($l->t('Allowed groups (leave empty for all users)')); ?></label>
-                <div id="groups-checkbox-list" style="max-height: 120px; overflow-y: auto; border: 1px solid var(--color-border); padding: 8px; border-radius: 3px;">
-                    <?php foreach ($_['allGroups'] as $group): ?>
-                        <?php
-                            // Handles both object (Group), array, and string representations of Nextcloud groups
-                            $groupId = is_object($group) ? $group->getGID() : (is_array($group) ? ($group['id'] ?? $group['gid'] ?? '') : $group);
-                            $groupName = is_object($group) ? $group->getDisplayName() : (is_array($group) ? ($group['name'] ?? $group['gid'] ?? '') : $group);
-                        ?>
-                        <label style="display: block; margin-bottom: 4px;">
-                            <input type="checkbox" class="group-checkbox" value="<?php p($groupId); ?>">
-                            <?php p($groupName); ?>
-                        </label>
-                    <?php endforeach; ?>
+                        <p>
+                            <label><?php p($l->t('Allowed groups (leave empty for all users)')); ?></label>
+                            <div id="groups-checkbox-list" class="groups-chip-list">
+                                <?php foreach ($_['allGroups'] as $group): ?>
+                                    <?php
+                                        // Handles both object (Group), array, and string representations of Nextcloud groups
+                                        $groupId = is_object($group) ? $group->getGID() : (is_array($group) ? ($group['id'] ?? $group['gid'] ?? '') : $group);
+                                        $groupName = is_object($group) ? $group->getDisplayName() : (is_array($group) ? ($group['name'] ?? $group['gid'] ?? '') : $group);
+                                    ?>
+                                    <label class="group-chip">
+                                        <input type="checkbox" class="group-checkbox" value="<?php p($groupId); ?>">
+                                        <span><?php p($groupName); ?></span>
+                                    </label>
+                                <?php endforeach; ?>
+                            </div>
+                            <input type="hidden" id="button-groups" name="groupes" value="[]" />
+                        </p>
+
+                        <div class="inline-fields">
+                            <p class="order-field">
+                                <label for="button-order"><?php p($l->t('Display order')); ?></label>
+                                <input type="number" id="button-order" name="ordre" value="10" min="0" />
+                            </p>
+
+                            <p class="active-field">
+                                <label class="checkbox-label" for="button-active">
+                                    <input type="checkbox" id="button-active" name="actif" value="1" checked />
+                                    <?php p($l->t('Active')); ?>
+                                </label>
+                            </p>
+                        </div>
+                    </fieldset>
+
                 </div>
-                <input type="hidden" id="button-groups" name="groupes" value="[]" />
-            </p>
 
-            <p>
-                <label for="button-order"><?php p($l->t('Display order')); ?></label>
-                <input type="number" id="button-order" name="ordre" value="10" min="0" />
-            </p>
+                <!-- Icon column -->
+                <div class="modal-column modal-column-icon">
+                    <span class="section-label"><?php p($l->t('Icon')); ?></span>
 
-            <p>
-                <label for="button-active">
-                    <input type="checkbox" id="button-active" name="actif" value="1" checked />
-                    <?php p($l->t('Active')); ?>
-                </label>
-            </p>
+                    <div class="icon-preview-card">
+                        <img id="icon-preview" src="" alt="" />
+                    </div>
 
-            <div class="modal-actions">
-                <button type="button" id="modal-cancel" class="button"><?php p($l->t('Cancel')); ?></button>
-                <button type="submit" id="modal-save" class="button button-primary"><?php p($l->t('Save')); ?></button>
+                    <input type="text" id="button-icon" name="icone"
+                           class="icon-filename-display"
+                           placeholder="<?php p($l->t('No icon selected')); ?>"
+                           aria-label="<?php p($l->t('Selected icon filename')); ?>"
+                           required readonly />
+
+                    <div class="icon-actions">
+                        <input type="file" id="button-icon-file" class="icon-file-input"
+                               accept="image/png,image/jpeg,image/svg+xml,image/webp" />
+                        <button type="button" id="browse-icons-btn" class="button"><?php p($l->t('My icons')); ?></button>
+                        <button type="button" id="browse-library-btn" class="button"><?php p($l->t('Library')); ?></button>
+                    </div>
+
+                    <div id="icon-gallery" class="icon-gallery hidden"></div>
+                    <div id="library-gallery" class="icon-gallery hidden"></div>
+
+                    <p class="taille-field">
+                        <label for="button-taille"><?php p($l->t('Icon size')); ?></label>
+                        <select id="button-taille" name="taille" class="input-wide">
+                            <option value="small"><?php p($l->t('Small (32px)')); ?></option>
+                            <option value="medium" selected><?php p($l->t('Medium (48px)')); ?></option>
+                            <option value="large"><?php p($l->t('Large (64px)')); ?></option>
+                            <option value="xlarge"><?php p($l->t('Extra large (96px)')); ?></option>
+                        </select>
+                    </p>
+                </div>
+
             </div>
         </form>
+
+        <div class="modal-actions">
+            <button type="button" id="modal-cancel" class="button"><?php p($l->t('Cancel')); ?></button>
+            <button type="submit" id="modal-save" class="button button-primary" form="button-form"><?php p($l->t('Save')); ?></button>
+        </div>
     </div>
 </div>

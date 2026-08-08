@@ -148,23 +148,26 @@ document.addEventListener('DOMContentLoaded', function () {
         tr_.dataset.active = actif ? '1' : '0';
         tr_.dataset.taille = button.taille || 'medium';
 
-        tr_.innerHTML = `
-            <td class="col-order">${escapeHtml(button.ordre)}</td>
-            <td class="col-title"><strong>${escapeHtml(button.titre)}</strong></td>
-            <td class="col-icon">${renderIconThumb(button.icone)}</td>
-            <td class="col-taille">${escapeHtml(tailleLabel)}</td>
-            <td class="col-route"><code>${escapeHtml(button.route)}</code></td>
-            <td class="col-groups">${escapeHtml(displayGroups)}</td>
-            <td class="col-active">
-                <span class="status-badge ${actif ? 'active' : 'inactive'}">${actif ? escapeHtml(tr('Yes')) : escapeHtml(tr('No'))}</span>
-            </td>
-            <td class="col-actions">
-                <button class="button edit-button" title="${escapeHtml(tr('Edit'))}">${escapeHtml(tr('Edit'))}</button>
-                <button class="button button-danger delete-button" title="${escapeHtml(tr('Delete'))}">${escapeHtml(tr('Delete'))}</button>
-            </td>
-        `;
-        return tr_;
-    }
+     tr_.setAttribute('draggable', 'true');
+
+    tr_.innerHTML = `
+        <td class="col-drag"><span class="drag-handle" title="${escapeHtml(tr('Drag to reorder'))}"></span></td>
+        <td class="col-order">${escapeHtml(button.ordre)}</td>
+        <td class="col-title"><strong>${escapeHtml(button.titre)}</strong></td>
+        <td class="col-icon">${renderIconThumb(button.icone)}</td>
+        <td class="col-taille">${escapeHtml(tailleLabel)}</td>
+        <td class="col-route"><code>${escapeHtml(button.route)}</code></td>
+        <td class="col-groups">${escapeHtml(displayGroups)}</td>
+        <td class="col-active">
+            <span class="status-badge ${actif ? 'active' : 'inactive'}">${actif ? escapeHtml(tr('Yes')) : escapeHtml(tr('No'))}</span>
+        </td>
+        <td class="col-actions">
+            <button class="button edit-button" title="${escapeHtml(tr('Edit'))}">${escapeHtml(tr('Edit'))}</button>
+            <button class="button button-danger delete-button" title="${escapeHtml(tr('Delete'))}">${escapeHtml(tr('Delete'))}</button>
+        </td>
+    `;
+    return tr_;
+}
 
     function renderButtonsTable(buttons) {
         tableBody.innerHTML = '';
@@ -197,7 +200,7 @@ document.addEventListener('DOMContentLoaded', function () {
             const formData = new FormData();
             formData.append('icon', file);
 
-            fetch(OC.generateUrl('/apps/dashboardlauncher/api/admin/icon'), {
+            fetch(OCgenerateUrl('/apps/dashboardlauncher/api/admin/icon'), {
                 method: 'POST',
                 headers: { 'requesttoken': OC.requestToken },
                 body: formData
@@ -353,59 +356,64 @@ document.addEventListener('DOMContentLoaded', function () {
         });
     }
 
-    tableBody.addEventListener('click', function (e) {
-        const editBtn = e.target.closest('.edit-button');
-        const deleteBtn = e.target.closest('.delete-button');
+    function openEditModal(row) {
+    modalTitle.textContent = tr('Edit shortcut');
+    document.getElementById('button-id').value = row.dataset.id || '';
+    document.getElementById('button-title').value = row.dataset.title || '';
+    document.getElementById('button-icon').value = row.dataset.icon || '';
+    document.getElementById('button-route').value = row.dataset.route || '';
+    document.getElementById('button-order').value = row.dataset.order || '10';
+    document.getElementById('button-active').checked = row.dataset.active === '1';
+    if (tailleSelect) tailleSelect.value = row.dataset.taille || 'medium';
 
-        if (editBtn) {
-            const row = editBtn.closest('tr');
-            if (!row) return;
+    setGroupCheckboxes(row.dataset.groups || '[]');
+    showIconPreview(row.dataset.icon || '');
 
-            modalTitle.textContent = tr('Edit shortcut');
-            document.getElementById('button-id').value = row.dataset.id || '';
-            document.getElementById('button-title').value = row.dataset.title || '';
-            document.getElementById('button-icon').value = row.dataset.icon || '';
-            document.getElementById('button-route').value = row.dataset.route || '';
-            document.getElementById('button-order').value = row.dataset.order || '10';
-            document.getElementById('button-active').checked = row.dataset.active === '1';
-            if (tailleSelect) tailleSelect.value = row.dataset.taille || 'medium';
+    modal.classList.remove('hidden');
+}
 
-            setGroupCheckboxes(row.dataset.groups || '[]');
-            showIconPreview(row.dataset.icon || '');
+tableBody.addEventListener('click', function (e) {
+    const editBtn = e.target.closest('.edit-button');
+    const deleteBtn = e.target.closest('.delete-button');
+    const dragHandle = e.target.closest('.drag-handle');
+    const row = e.target.closest('tr');
 
-            modal.classList.remove('hidden');
-        }
+    if (!row) return;
 
-        if (deleteBtn) {
-            const row = deleteBtn.closest('tr');
-            if (!row) return;
+    // Ignore les clics sur la poignée de drag : ne doit pas ouvrir le modal
+    if (dragHandle) return;
 
-            const id = row.dataset.id;
+    if (deleteBtn) {
+        const id = row.dataset.id;
 
-            if (confirm(tr('Are you sure you want to delete this shortcut?'))) {
-                const url = OC.generateUrl(`/apps/dashboardlauncher/api/admin/button/${id}`);
+        if (confirm(tr('Are you sure you want to delete this shortcut?'))) {
+            const url = OC.generateUrl(`/apps/dashboardlauncher/api/admin/button/${id}`);
 
-                fetch(url, {
-                    method: 'DELETE',
-                    headers: {
-                        'requesttoken': OC.requestToken
-                    }
-                })
-                .then(response => response.json())
-                .then(data => {
-                    if (data && data.status === 'success') {
-                        notify(tr('Shortcut deleted'));
-                        refreshButtonsTable();
-                    } else {
-                        notify(tr('Error deleting the shortcut'), true);
-                    }
-                })
-                .catch(error => {
-                    console.error('[DashboardLauncher] Error deleting:', error);
+            fetch(url, {
+                method: 'DELETE',
+                headers: {
+                    'requesttoken': OC.requestToken
+                }
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data && data.status === 'success') {
+                    notify(tr('Shortcut deleted'));
+                    refreshButtonsTable();
+                } else {
                     notify(tr('Error deleting the shortcut'), true);
-                });
-            }
+                }
+            })
+            .catch(error => {
+                console.error('[DashboardLauncher] Error deleting:', error);
+                notify(tr('Error deleting the shortcut'), true);
+            });
         }
+        return;
+    }
+
+    // Clic sur "Edit" OU n'importe où ailleurs sur la ligne (hors poignée/delete) : ouvre le modal
+    openEditModal(row);
     });
 
     form.addEventListener('submit', function (e) {
@@ -502,4 +510,122 @@ document.addEventListener('DOMContentLoaded', function () {
             .catch(() => notify(tr('Error while saving'), true));
         });
     }
+
+
+// ==========================================================================
+// Drag & drop reordering
+// ==========================================================================
+
+let dragSrcRow = null;
+
+tableBody.addEventListener('dragstart', function (e) {
+    const row = e.target.closest('tr');
+    if (!row || !row.closest('#dashboardlauncher-buttons-table tbody')) return;
+    dragSrcRow = row;
+    e.dataTransfer.effectAllowed = 'move';
+    // Certains navigateurs exigent des données pour autoriser le drag
+    e.dataTransfer.setData('text/plain', row.dataset.id || '');
+    row.classList.add('dragging');
+});
+
+tableBody.addEventListener('dragend', function (e) {
+    const row = e.target.closest('tr');
+    if (row) row.classList.remove('dragging');
+    tableBody.querySelectorAll('tr').forEach(r => {
+        r.classList.remove('drag-over-top', 'drag-over-bottom');
+    });
+    dragSrcRow = null;
+});
+
+tableBody.addEventListener('dragover', function (e) {
+    if (!dragSrcRow) return;
+    const row = e.target.closest('tr');
+    if (!row || row === dragSrcRow) return;
+    e.preventDefault();
+    e.dataTransfer.dropEffect = 'move';
+
+    const rect = row.getBoundingClientRect();
+    const isAfter = (e.clientY - rect.top) > (rect.height / 2);
+
+    tableBody.querySelectorAll('tr').forEach(r => {
+        r.classList.remove('drag-over-top', 'drag-over-bottom');
+    });
+    row.classList.add(isAfter ? 'drag-over-bottom' : 'drag-over-top');
+});
+
+tableBody.addEventListener('drop', function (e) {
+    if (!dragSrcRow) return;
+    const row = e.target.closest('tr');
+    if (!row || row === dragSrcRow) return;
+    e.preventDefault();
+
+    const rect = row.getBoundingClientRect();
+    const isAfter = (e.clientY - rect.top) > (rect.height / 2);
+
+    if (isAfter) {
+        row.parentNode.insertBefore(dragSrcRow, row.nextSibling);
+    } else {
+        row.parentNode.insertBefore(dragSrcRow, row);
+    }
+
+    row.classList.remove('drag-over-top', 'drag-over-bottom');
+    persistNewOrder();
+});
+
+function persistNewOrder() {
+    const rows = Array.from(tableBody.querySelectorAll('tr'));
+    const updates = [];
+
+    rows.forEach((row, index) => {
+        const newOrdre = (index + 1) * 10;
+        if (parseInt(row.dataset.order, 10) !== newOrdre) {
+            row.dataset.order = String(newOrdre);
+            const orderCell = row.querySelector('.col-order');
+            if (orderCell) orderCell.textContent = newOrdre;
+            updates.push(row);
+        }
+    });
+
+    if (updates.length === 0) return;
+
+    const savePromises = updates.map(row => {
+        let groupes = '[]';
+        try {
+            groupes = JSON.stringify(JSON.parse(row.dataset.groups || '[]'));
+        } catch (e) {
+            groupes = '[]';
+        }
+
+        const payload = {
+            id: parseInt(row.dataset.id, 10),
+            titre: row.dataset.title || '',
+            icone: row.dataset.icon || '',
+            route: row.dataset.route || '',
+            groupes: groupes,
+            ordre: parseInt(row.dataset.order, 10),
+            actif: row.dataset.active === '1' ? 1 : 0,
+            taille: row.dataset.taille || 'medium'
+        };
+
+        return fetch(OC.generateUrl('/apps/dashboardlauncher/api/admin/button'), {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'requesttoken': OC.requestToken
+            },
+            body: JSON.stringify(payload)
+        }).then(r => r.json());
+    });
+
+    Promise.all(savePromises)
+        .then(results => {
+            const allOk = results.every(r => r && r.status === 'success');
+            if (allOk) {
+                notify(tr('Order updated'));
+            } else {
+                notify(tr('Error saving the new order'), true);
+            }
+        })
+        .catch(() => notify(tr('Error saving the new order'), true));
+}
 });
