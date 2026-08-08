@@ -36,7 +36,7 @@ Search for "Dashboard Launcher" in **Apps** on your Nextcloud instance, or visit
 
 1. Download or clone this repository into your Nextcloud `custom_apps` (or `apps`) directory:
    ```bash
-   git clone https://github.com/dpfpic/dashboardlauncher.git /path/to/nextcloud/custom_apps/dashboardlauncher
+   git clone https://github.com/YOUR_USERNAME/dashboardlauncher.git /path/to/nextcloud/custom_apps/dashboardlauncher
    ```
 2. Enable the app:
    ```bash
