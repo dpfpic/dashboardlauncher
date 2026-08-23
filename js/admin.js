@@ -42,6 +42,28 @@ document.addEventListener('DOMContentLoaded', function () {
         return;
     }
 
+    // ==========================================================================
+    // Admin tabs (General / Menu management / Backup)
+    // ==========================================================================
+
+    const tabButtons = document.querySelectorAll('.dl-tab-btn');
+    const tabPanels = document.querySelectorAll('.dl-tab-panel');
+
+    tabButtons.forEach(function (btn) {
+        btn.addEventListener('click', function () {
+            const target = btn.dataset.tab;
+
+            tabButtons.forEach(function (b) {
+                b.classList.toggle('active', b === btn);
+                b.setAttribute('aria-selected', b === btn ? 'true' : 'false');
+            });
+
+            tabPanels.forEach(function (panel) {
+                panel.classList.toggle('hidden', panel.dataset.tabPanel !== target);
+            });
+        });
+    });
+
     function notify(message, isError = false) {
         if (window.OC && window.OC.Notification && typeof window.OC.Notification.showTemporary === 'function') {
             window.OC.Notification.showTemporary(message);
@@ -200,7 +222,7 @@ document.addEventListener('DOMContentLoaded', function () {
             const formData = new FormData();
             formData.append('icon', file);
 
-            fetch(OCgenerateUrl('/apps/dashboardlauncher/api/admin/icon'), {
+            fetch(OC.generateUrl('/apps/dashboardlauncher/api/admin/icon'), {
                 method: 'POST',
                 headers: { 'requesttoken': OC.requestToken },
                 body: formData
@@ -508,6 +530,66 @@ tableBody.addEventListener('click', function (e) {
                 }
             })
             .catch(() => notify(tr('Error while saving'), true));
+        });
+    }
+
+    // ==========================================================================
+    // Backup: import (export is a plain link download, no JS needed)
+    // ==========================================================================
+
+    const importConfigBtn = document.getElementById('import-config-btn');
+    const importConfigFile = document.getElementById('import-config-file');
+
+    if (importConfigBtn && importConfigFile) {
+        importConfigBtn.addEventListener('click', function () {
+            const file = importConfigFile.files[0];
+            if (!file) {
+                notify(tr('Please choose a backup file first'), true);
+                return;
+            }
+
+            if (!window.confirm(tr('This will replace ALL current shortcuts and settings with the content of the backup file. Continue?'))) {
+                return;
+            }
+
+            const formData = new FormData();
+            formData.append('backup', file);
+
+            fetch(OC.generateUrl('/apps/dashboardlauncher/api/admin/backup/import'), {
+                method: 'POST',
+                headers: { 'requesttoken': OC.requestToken },
+                body: formData
+            })
+            .then(async response => {
+                const data = await response.json().catch(() => null);
+                if (!response.ok || !data || data.status !== 'success') {
+                    const errorMsg = (data && data.error) ? data.error : tr('Error restoring backup');
+                    throw new Error(errorMsg);
+                }
+                return data;
+            })
+            .then(data => {
+                notify(tr('Backup restored successfully ({count} shortcuts)', { count: data.imported }));
+                importConfigFile.value = '';
+                refreshButtonsTable();
+                if (siteSettingsForm) {
+                    fetch(OC.generateUrl('/apps/dashboardlauncher/api/admin/site-settings'), {
+                        method: 'GET',
+                        headers: { 'requesttoken': OC.requestToken }
+                    })
+                    .then(r => r.json())
+                    .then(settings => {
+                        document.getElementById('site-title').value = settings.site_title || '';
+                        document.getElementById('welcome-text').value = settings.welcome_text || '';
+                        document.getElementById('footer-text').value = settings.footer_text || '';
+                    })
+                    .catch(() => {});
+                }
+            })
+            .catch(error => {
+                console.error('[DashboardLauncher] Error restoring backup:', error);
+                notify(tr('Error: {message}', { message: error.message }), true);
+            });
         });
     }
 

@@ -12,6 +12,7 @@ use OCA\DashboardLauncher\Service\ButtonService;
 use OCP\AppFramework\Controller;
 use OCP\AppFramework\Http\DataResponse;
 use OCP\AppFramework\Http\DataDisplayResponse;
+use OCP\AppFramework\Http\DataDownloadResponse;
 use OCP\AppFramework\Http\Attribute\AdminRequired;
 use OCP\AppFramework\Http\Attribute\NoAdminRequired;
 use OCP\AppFramework\Http\Attribute\NoCSRFRequired;
@@ -226,6 +227,88 @@ class AdminController extends Controller {
             return $response;
         } catch (\Throwable $e) {
             return new DataDisplayResponse('', 404);
+        }
+    }
+
+    #[AdminRequired]
+    #[NoCSRFRequired]
+    public function exportConfig(): DataDownloadResponse {
+        $buttons = $this->buttonService->getAllButtons();
+
+        $settings = [
+            'site_title'   => $this->config->getAppValue($this->appName, 'site_title', ''),
+            'welcome_text' => $this->config->getAppValue($this->appName, 'welcome_text', ''),
+            'footer_text'  => $this->config->getAppValue($this->appName, 'footer_text', ''),
+        ];
+
+        $export = [
+            'app'         => $this->appName,
+            'app_version' => $this->appManager->getAppVersion($this->appName),
+            'exported_at' => date('c'),
+            'settings'    => $settings,
+            'buttons'     => array_map(function ($button) {
+                unset($button['id']);
+                return $button;
+            }, $buttons),
+        ];
+
+        $json = json_encode($export, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
+        $filename = 'dashboardlauncher-backup-' . date('Y-m-d_His') . '.json';
+
+        return new DataDownloadResponse($json, $filename, 'application/json');
+    }
+
+    #[AdminRequired]
+    public function importConfig(): DataResponse {
+        try {
+            $file = $this->request->getUploadedFile('backup');
+
+            if ($file === null || !isset($file['tmp_name']) || $file['error'] !== UPLOAD_ERR_OK) {
+                return new DataResponse(['error' => $this->l->t('No file received')], 400);
+            }
+
+            $content = file_get_contents($file['tmp_name']);
+            $data = json_decode($content, true);
+
+            if (!is_array($data) || !isset($data['buttons']) || !is_array($data['buttons'])) {
+                return new DataResponse(['error' => $this->l->t('Invalid backup file')], 400);
+            }
+
+            if (isset($data['settings']) && is_array($data['settings'])) {
+                foreach (['site_title', 'welcome_text', 'footer_text'] as $key) {
+                    if (isset($data['settings'][$key])) {
+                        $this->config->setAppValue($this->appName, $key, (string)$data['settings'][$key]);
+                    }
+                }
+            }
+
+            $this->buttonService->deleteAllButtons();
+
+            foreach ($data['buttons'] as $button) {
+                $groupes = $button['groupes'] ?? '[]';
+                if (is_array($groupes)) {
+                    $groupes = json_encode($groupes);
+                }
+
+                $this->buttonService->saveButton([
+                    'id'      => null,
+                    'titre'   => (string)($button['titre'] ?? ''),
+                    'icone'   => (string)($button['icone'] ?? 'icon-link'),
+                    'route'   => (string)($button['route'] ?? ''),
+                    'ordre'   => (int)($button['ordre'] ?? 10),
+                    'groupes' => $groupes,
+                    'actif'   => filter_var($button['actif'] ?? true, FILTER_VALIDATE_BOOLEAN),
+                    'taille'  => (string)($button['taille'] ?? 'medium'),
+                ]);
+            }
+
+            return new DataResponse(['status' => 'success', 'imported' => count($data['buttons'])]);
+        } catch (\Throwable $e) {
+            return new DataResponse([
+                'error' => $e->getMessage(),
+                'file' => $e->getFile(),
+                'line' => $e->getLine()
+            ], 500);
         }
     }
 

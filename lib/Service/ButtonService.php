@@ -127,4 +127,10 @@ class ButtonService {
 
         $qb->executeStatement();
     }
+
+    public function deleteAllButtons(): void {
+        $qb = $this->db->getQueryBuilder();
+        $qb->delete(self::TABLE);
+        $qb->executeStatement();
+    }
 }

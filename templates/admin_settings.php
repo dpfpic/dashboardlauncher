@@ -50,33 +50,50 @@ $dashboardLauncherL10n = [
 	'Order updated' => $l->t('Order updated'),
 	'Error saving the new order' => $l->t('Error saving the new order'),
 	'Drag rows to reorder' => $l->t('Drag rows to reorder'),
+	'Please choose a backup file first' => $l->t('Please choose a backup file first'),
+	'This will replace ALL current shortcuts and settings with the content of the backup file. Continue?' => $l->t('This will replace ALL current shortcuts and settings with the content of the backup file. Continue?'),
+	'Backup restored successfully ({count} shortcuts)' => $l->t('Backup restored successfully ({count} shortcuts)'),
+	'Error restoring backup' => $l->t('Error restoring backup'),
+	'Invalid backup file' => $l->t('Invalid backup file'),
 ];
 ?>
 
 <div class="section" id="dashboardlauncher-admin" data-l10n="<?php p(json_encode($dashboardLauncherL10n)); ?>">
-    <h2><?php p($l->t('Dashboard Launcher - Administration')); ?></h2>
-
-    <div class="site-settings-panel">
-        <h3><?php p($l->t('Dashboard settings')); ?></h3>
-        <form id="site-settings-form">
-            <p>
-                <label for="site-title"><?php p($l->t('Main title')); ?></label>
-                <input type="text" id="site-title" name="site_title" class="input-wide" />
-            </p>
-            <p>
-                <label for="welcome-text"><?php p($l->t('Welcome text (use {displayName} for the user\'s name)')); ?></label>
-                <input type="text" id="welcome-text" name="welcome_text" class="input-wide" />
-            </p>
-            <p>
-                <label for="footer-text"><?php p($l->t('Footer text')); ?></label>
-                <input type="text" id="footer-text" name="footer_text" class="input-wide" />
-            </p>
-            <div class="form-actions">
-                <button type="submit" class="button button-primary"><?php p($l->t('Save settings')); ?></button>
-            </div>
-        </form>
+    <div class="dl-brand-header">
+        <a href="https://github.com/dpfpic"><img class="dl-brand-logo" src="<?php print_unescaped(\OC::$server->get(\OCP\IURLGenerator::class)->imagePath('dashboardlauncher', 'dpfpic-logo.png')); ?>" alt="DPFPIC" /></a>
+        <h2><?php p($l->t('Dashboard Launcher - Administration')); ?></h2>
     </div>
 
+    <div class="dl-tabs" role="tablist">
+        <button type="button" class="dl-tab-btn active" data-tab="general" role="tab" aria-selected="true"><?php p($l->t('General')); ?></button>
+        <button type="button" class="dl-tab-btn" data-tab="menu" role="tab" aria-selected="false"><?php p($l->t('Menu management')); ?></button>
+        <button type="button" class="dl-tab-btn" data-tab="backup" role="tab" aria-selected="false"><?php p($l->t('Backup')); ?></button>
+    </div>
+
+    <div class="dl-tab-panel" id="dl-tab-general" data-tab-panel="general">
+        <div class="site-settings-panel">
+            <h3><?php p($l->t('Dashboard settings')); ?></h3>
+            <form id="site-settings-form">
+                <p>
+                    <label for="site-title"><?php p($l->t('Main title')); ?></label>
+                    <input type="text" id="site-title" name="site_title" class="input-wide" />
+                </p>
+                <p>
+                    <label for="welcome-text"><?php p($l->t('Welcome text (use {displayName} for the user\'s name)')); ?></label>
+                    <input type="text" id="welcome-text" name="welcome_text" class="input-wide" />
+                </p>
+                <p>
+                    <label for="footer-text"><?php p($l->t('Footer text')); ?></label>
+                    <input type="text" id="footer-text" name="footer_text" class="input-wide" />
+                </p>
+                <div class="form-actions">
+                    <button type="submit" class="button button-primary"><?php p($l->t('Save settings')); ?></button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <div class="dl-tab-panel hidden" id="dl-tab-menu" data-tab-panel="menu">
     <div class="dashboardlauncher-header">
         <p class="settings-hint"><?php p($l->t('Manage the shortcut buttons displayed on users\' dashboards.')); ?></p>
         <button id="add-button" class="button button-primary">
@@ -175,6 +192,29 @@ $dashboardLauncherL10n = [
             <?php endforeach; ?>
         </tbody>
     </table>
+    </div>
+
+    <div class="dl-tab-panel hidden" id="dl-tab-backup" data-tab-panel="backup">
+        <h3><?php p($l->t('Backup & restore')); ?></h3>
+        <p class="settings-hint"><?php p($l->t('Export the current configuration (general settings + shortcuts) to a JSON file, or restore a previous backup.')); ?></p>
+
+        <div class="backup-actions">
+            <div class="backup-block">
+                <h4><?php p($l->t('Export')); ?></h4>
+                <p><?php p($l->t('Download a JSON file containing all current settings and shortcuts.')); ?></p>
+                <a id="export-config-btn" class="button button-primary" href="<?php print_unescaped(\OC::$server->get(\OCP\IURLGenerator::class)->linkToRoute('dashboardlauncher.admin.exportConfig')); ?>">
+                    <?php p($l->t('Download backup')); ?>
+                </a>
+            </div>
+
+            <div class="backup-block">
+                <h4><?php p($l->t('Import')); ?></h4>
+                <p class="warning-text"><?php p($l->t('Warning: restoring a backup completely replaces the current shortcuts and settings.')); ?></p>
+                <input type="file" id="import-config-file" accept="application/json" class="input-wide" />
+                <button type="button" id="import-config-btn" class="button button-danger"><?php p($l->t('Restore this backup')); ?></button>
+            </div>
+        </div>
+    </div>
 </div>
 
 <!-- Modal Form for Adding/Editing Buttons -->

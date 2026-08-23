@@ -2,6 +2,15 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.6.4] - 2026-08-17
+
+### Added
+- Admin panel reorganized into three tabs: General, Menu management, Backup.
+- Backup & restore: export the full configuration (settings + shortcuts) to a JSON file, and restore it from the new Backup tab.
+
+### Fixed
+- Icon upload button used an invalid `OCgenerateUrl` reference instead of `OC.generateUrl`, which broke custom icon uploads.
+
 ## [1.0.0] - 2026-07-28
 
 ### Added

@@ -19,5 +19,9 @@ return [
         ['name' => 'admin#deleteButton', 'url' => '/api/admin/button/{id}', 'verb' => 'DELETE'],
         ['name' => 'admin#uploadIcon', 'url' => '/api/admin/icon', 'verb' => 'POST'],
         ['name' => 'admin#getIcon', 'url' => '/icon/{filename}', 'verb' => 'GET'],
+
+        // Sauvegarde / restauration de la configuration
+        ['name' => 'admin#exportConfig', 'url' => '/api/admin/backup/export', 'verb' => 'GET'],
+        ['name' => 'admin#importConfig', 'url' => '/api/admin/backup/import', 'verb' => 'POST'],
     ]
 ];
